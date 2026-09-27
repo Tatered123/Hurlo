@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight-voltage">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Hurlo — the storm arcade. Instant-play browser games.">
+  <meta name="theme-color" content="#08080c">
+  <title>Hurlo</title>
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <script>
+    // Apply persisted settings before first paint to avoid a theme flash.
+    (function () {
+      try {
+        var s = JSON.parse(localStorage.getItem('hurlo:settings:v1') || '{}');
+        var t = document.documentElement;
+        if (s.theme) t.setAttribute('data-theme', s.theme);
+        if (s.density) t.setAttribute('data-density', s.density);
+        var reduced = s.reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var motion = s.motionScale;
+        if (motion === undefined) motion = reduced ? 0 : 1;
+        t.style.setProperty('--motion', Math.max(0, Math.min(1.5, motion)));
+        // tab cloak (early, so the real title never flashes)
+        var c = s.cloak || { id: 'off' };
+        var iconMap = {
+          classroom: ['Classes', 'https://www.google.com/s2/favicons?domain=classroom.google.com&sz=64'],
+          newtab: ['New Tab', 'https://www.google.com/s2/favicons?domain=google.com&sz=64'],
+          canvas: ['Dashboard', 'https://www.google.com/s2/favicons?domain=instructure.com&sz=64'],
+          drive: ['My Drive', 'https://www.google.com/s2/favicons?domain=drive.google.com&sz=64'],
+          docs: ['Home', 'https://www.google.com/s2/favicons?domain=docs.google.com&sz=64']
+        };
+        if (c.id === 'custom' && (c.title || c.icon)) {
+          document.title = c.title || 'Home';
+          if (c.icon) document.querySelector('link[rel="icon"]').setAttribute('href', c.icon);
+        } else if (iconMap[c.id]) {
+          document.title = iconMap[c.id][0];
+          document.querySelector('link[rel="icon"]').setAttribute('href', iconMap[c.id][1]);
+        }
+        var meta = document.querySelector('meta[name="theme-color"]');
+        var map = {
+          'midnight-voltage': '#08080c', 'arctic-pulse': '#e9edf3', 'solar-flare': '#0e0b08',
+          'velvet-horizon': '#120e13', 'neon-current': '#050507', 'obsidian-bloom': '#0a0d0c',
+          'aurora-circuit': '#060a13', 'crimson-drift': '#0d0a0b'
+        };
+        if (meta && map[s.theme]) meta.setAttribute('content', map[s.theme]);
+      } catch (e) { /* first run / blocked storage — defaults apply */ }
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to content</a>
+
+  <div class="bg-atmosphere" aria-hidden="true">
+    <div class="bg-arm bg-arm--1"></div>
+    <div class="bg-arm bg-arm--2"></div>
+    <canvas id="bg-vortex"></canvas>
+    <div class="bg-vignette"></div>
+  </div>
+
+  <div id="app" class="app">
+    <header class="topbar" id="topbar"></header>
+    <main id="view" class="view" tabindex="-1"></main>
+  </div>
+
+  <div class="hud-bl" id="hud-bl"></div>
+  <div class="hud-bc" id="hud-bc"></div>
+  <div class="hud-br" id="hud-br"></div>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="false"></div>
+  <div id="modal-root"></div>
+
+  <script src="data/catalog.js"></script>
+  <script src="assets/js/util.js"></script>
+  <script src="assets/js/settings.js"></script>
+  <script src="assets/js/cloak.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/catalog.js"></script>
+  <script src="assets/js/bg.js"></script>
+  <script src="assets/js/router.js"></script>
+  <script src="assets/js/pages/home.js"></script>
+  <script src="assets/js/pages/games.js"></script>
+  <script src="assets/js/pages/player.js"></script>
+  <script src="assets/js/pages/settings-page.js"></script>
+  <script src="assets/js/pages/proxy.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
