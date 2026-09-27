@@ -88,14 +88,68 @@
       H.router.go('#/proxy');
     }
 
-    /* shortcuts into the file system (dynamic — follows the real libraries) */
-    const shortcuts = [{ icon: 'folder', label: 'All games', href: '#/games' }];
-    for (const lib of H.catalog.libraries) {
-      for (const cat of lib.categories) {
-        shortcuts.push({ icon: cat.id === 'flash' ? 'zap' : cat.id === 'emulated' ? 'gamepad' : 'grid', label: cat.label.replace(' Games', ''), href: `#/games/${lib.id}/${cat.id}` });
-      }
-    }
+    /* proxy hotkeys: one click opens the site through the relay.
+       Built-ins + whatever the visitor adds with the plus tile. */
+    const KEY = 'hurlo:proxy-shortcuts:v1';
+    const builtins = [
+      { icon: 'film', label: 'Movies', url: 'https://reelix.ac/' },
+      { icon: 'music', label: 'Music', url: 'https://monochrome.st/' }
+    ];
+    const customs = H.util.storage.get(KEY, []);
 
+    function row() {
+      const r = document.querySelector('.shortcut-row');
+      if (!r) return;
+      r.innerHTML = '';
+      for (const s of builtins) r.append(tile(s.icon, s.label, () => goProxy(s.url)));
+      for (const c of customs) r.append(customTile(c));
+      r.append(el('button', {
+        class: 'shortcut shortcut-add', 'aria-label': 'Add a shortcut', title: 'Add a shortcut',
+        onClick: () => addDialog()
+      },
+        el('span', { class: 'shortcut-ic', html: H.ui.icon('plus') }),
+        el('span', null, 'Add')));
+    }
+    function tile(iconName, label, onClick) {
+      return el('button', { class: 'shortcut', 'aria-label': label, onClick },
+        el('span', { class: 'shortcut-ic', html: H.ui.icon(iconName) }),
+        el('span', null, label));
+    }
+    function customTile(c) {
+      const t = tile('globe', c.name, () => goProxy(c.url));
+      t.classList.add('shortcut-custom');
+      t.title = c.url;
+      const x = el('button', {
+        class: 'shortcut-x', 'aria-label': 'Remove ' + c.name, title: 'Remove',
+        onClick: (e) => {
+          e.stopPropagation();
+          const next = customs.filter(function (s) { return s.name !== c.name || s.url !== c.url; });
+          H.util.storage.set(KEY, next);
+          customs.length = 0;
+          next.forEach(function (s) { customs.push(s); });
+          row();
+        }
+      }, '×');
+      t.append(x);
+      return t;
+    }
+    function addDialog() {
+      H.ui.modal({
+        title: 'Add a shortcut',
+        fields: [
+          { key: 'name', label: 'Name', placeholder: 'e.g. Movies', type: 'text' },
+          { key: 'url', label: 'Address', placeholder: 'e.g. example.com', type: 'text' }
+        ],
+        confirm: 'Add',
+        onSubmit: function (values) {
+          if (!values.name.trim() || !values.url.trim()) return false;
+          customs.push({ name: values.name.trim(), url: values.url.trim() });
+          H.util.storage.set(KEY, customs);
+          row();
+          return true;
+        }
+      });
+    }
     view.append(el('div', { class: 'home page' },
       el('div', { class: 'home-brand' },
         el('span', { class: 'home-mark-mark', html: H.ui.logoSvg() }),
@@ -104,11 +158,9 @@
       el('div', { class: 'home-search' },
         el('div', { class: 'field' }, ic('search'), input, clearBtn),
         results),
-      el('div', { class: 'shortcut-row', role: 'group', 'aria-label': 'Shortcuts' },
-        shortcuts.map((s) => el('a', { class: 'shortcut', href: s.href, 'aria-label': s.label },
-          el('span', { class: 'shortcut-ic', html: H.ui.icon(s.icon) }),
-          el('span', null, s.label))))
+      el('div', { class: 'shortcut-row', role: 'group', 'aria-label': 'Proxy shortcuts' })
     ));
+    row();  // fill the shortcut row now that it exists in the DOM
     setTimeout(() => input.focus({ preventScroll: true }), 250);
     return () => document.removeEventListener('pointerdown', onDocDown);
   }

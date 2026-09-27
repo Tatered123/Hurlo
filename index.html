@@ -74,6 +74,11 @@
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="false"></div>
   <div id="modal-root"></div>
 
+  <script>
+    window.addEventListener('error', function (e) {
+      document.title = 'ERR: ' + (e.message || 'unknown') + ' @' + (e.filename || '').split('/').pop() + ':' + (e.lineno || 0);
+    });
+  </script>
   <script src="data/catalog.js"></script>
   <script src="assets/js/util.js"></script>
   <script src="assets/js/settings.js"></script>

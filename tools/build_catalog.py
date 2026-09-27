@@ -64,6 +64,7 @@ TITLE_SUFFIXES = (" - web", " | web", " web version")
 LIBRARY_NAMES = {
     "gn-math": "Gn-Math",
     "ugs": "UGS",
+    "favorites": "Favorites",
 }
 
 
@@ -99,7 +100,8 @@ def prettify_name(stem: str) -> str:
     m = re.fullmatch(r"(\d+)(?:[-_ ].*)?", stem)
     if m:
         return f"Game {m.group(1)}"
-    return re.sub(r"[-_]+", " ", stem).strip()[:70] or "Untitled"
+    out = re.sub(r"[-_]+", " ", stem).strip()[:70]
+    return out[:1].upper() + out[1:] if out else out or "Untitled"
 
 
 def swf_fallback_title(game_dir: Path) -> str:
@@ -434,6 +436,46 @@ def scan_ugs_style(lib_dir: Path, lib_id: str) -> dict | None:
     }
 
 
+def scan_flat(lib_dir: Path, lib_id: str) -> dict | None:
+    """Libraries that keep games loose at the root: *.html files, game folders
+    (flattened) and *.swf folders (played via Ruffle)."""
+    loose_html = [f for f in lib_dir.iterdir() if f.is_file() and f.suffix.lower() == ".html"]
+    if not loose_html:
+        return None
+
+    games = []
+    for gdir, entry in collect_games(lib_dir):
+        gid = make_game_id(lib_id, "root/" + (gdir.name if gdir else entry.stem))
+        games.append({
+            "id": gid, "title": title_for(entry, gdir, prettify_name((gdir or entry).stem)),
+            "entry": rel(entry), "cover": cover_for(lib_id, gid), "source": "flat",
+        })
+
+    # folders that hold only .swf files (flash games without an html wrapper)
+    swf_entries = {g["entry"] for g in games}
+    for d in sorted(lib_dir.iterdir(), key=lambda p: p.name.lower()):
+        if not d.is_dir() or d.name.startswith(".") or d.name in SKIP_DIRS:
+            continue
+        swfs = [f for f in sorted(d.iterdir()) if f.is_file() and f.suffix.lower() == ".swf"]
+        if not swfs:
+            continue
+        swf = swfs[0]
+        gid = make_game_id(lib_id, "swf/" + d.name)
+        entry_rel = rel(swf)
+        if entry_rel in swf_entries:
+            continue
+        games.append({
+            "id": gid, "title": title_for(swf, None, prettify_name(d.name)),
+            "entry": entry_rel, "cover": cover_for(lib_id, gid), "source": "flat", "kind": "swf",
+        })
+
+    games.sort(key=lambda g: sort_key(g["title"]))
+    return {
+        "id": lib_id, "name": LIBRARY_NAMES.get(lib_id, lib_dir.name.replace("-", " ").title()),
+        "categories": [], "systems": [], "games": games,
+    }
+
+
 def scan_legacy(lib_dir: Path, lib_id: str) -> dict | None:
     if not (lib_dir / "singlefile").is_dir() and not (lib_dir / "else").is_dir():
         return None
@@ -479,7 +521,7 @@ def main() -> int:
         if not lib_dir.is_dir() or lib_dir.name.startswith(".") or lib_dir.name in SKIP_DIRS:
             continue
         lib_id = lib_dir.name.lower()
-        lib = scan_ugs_style(lib_dir, lib_id) or scan_legacy(lib_dir, lib_id)
+        lib = scan_ugs_style(lib_dir, lib_id) or scan_legacy(lib_dir, lib_id) or scan_flat(lib_dir, lib_id)
         if lib:
             libraries.append(lib)
 

@@ -39,6 +39,9 @@
     'chevron-left': '<path d="m14.5 6-6 6 6 6"/>',
     users: '<circle cx="9" cy="8.2" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5.3 5.5-5.3s5.5 2.3 5.5 5.3"/><circle cx="16.8" cy="9.2" r="2.4"/><path d="M16.4 14.4c2.3.3 4.1 2.3 4.1 4.7"/>',
     clock: '<circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.2 1.9"/>',
+    music: '<path d="M9 18.4V6l9.4-2.2v11.4"/><circle cx="6.6" cy="18.4" r="2.7"/><circle cx="16" cy="15.2" r="2.7"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    film: '<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M7.2 4.5v15M16.8 4.5v15M3 9.2h4.2M3 14.8h4.2M16.8 9.2H21M16.8 14.8H21"/>',
     'shield-check': '<path d="M12 2.8 4.5 5.9v5.4c0 4.6 3.2 8 7.5 9.9 4.3-1.9 7.5-5.3 7.5-9.9V5.9z"/><path d="m8.8 11.8 2.3 2.3 4.1-4.6"/>'
   };
 
@@ -144,6 +147,53 @@
   }
   function closeModal() { if (openModal) { openModal.remove(); openModal = null; } }
 
+  /* generic form modal: fields submit as values; onSubmit returning false keeps it open */
+  function formModal(opts) {
+    closeModal();
+    const inputs = {};
+    const fields = el('div', null, (opts.fields || []).map(function (f) {
+      const input = el('input', {
+        class: 'field-input', type: f.type || 'text',
+        placeholder: f.placeholder || '', 'aria-label': f.label, spellcheck: 'false'
+      });
+      inputs[f.key] = input;
+      return el('div', { class: 'modal-field' },
+        el('label', { class: 'modal-label' }, f.label), input);
+    }));
+    const modal = el('form', {
+      class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title,
+      onSubmit: function (e) {
+        e.preventDefault();
+        const values = {};
+        for (const k in inputs) values[k] = inputs[k].value;
+        if (opts.onSubmit(values) === false) return;
+        close();
+      }
+    },
+      el('h3', null, opts.title),
+      fields,
+      el('div', { class: 'modal-actions' },
+        el('button', { type: 'button', class: 'btn btn--ghost', onClick: function () { close(); } }, 'Cancel'),
+        el('button', { type: 'submit', class: 'btn' }, opts.confirm || 'Save')));
+
+    function close() {
+      backdrop.classList.add('leaving');
+      setTimeout(function () { backdrop.remove(); }, 160);
+      document.removeEventListener('keydown', onKey);
+      if (prevFocus && prevFocus.focus) prevFocus.focus();
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+    }
+
+    const backdrop = el('div', { class: 'modal-backdrop' }, modal);
+    backdrop.addEventListener('mousedown', function (e) { if (e.target === backdrop) close(); });
+    document.getElementById('modal-root').append(backdrop);
+    document.addEventListener('keydown', onKey);
+    const first = opts.fields && opts.fields[0] && inputs[opts.fields[0].key];
+    if (first) first.focus();
+  }
+
   /* ---- game card ---- */
   function gameCard(game, lib, opts = {}) {
     const { index = 0 } = opts;
@@ -220,5 +270,5 @@
     return node;
   }
 
-  H.ui = { icon, iconEl, logoSvg, spinner, toast, confirm: confirmDialog, closeModal, gameCard, skeletonCard, emptyState };
+  H.ui = { icon, iconEl, logoSvg, spinner, toast, confirm: confirmDialog, modal: formModal, closeModal, gameCard, skeletonCard, emptyState };
 })(window.Hurlo = window.Hurlo || {});

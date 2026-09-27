@@ -213,6 +213,7 @@ body.player-active .topbar, body.player-active .hud-bl, body.player-active .hud-
 .proxy-head h1 { font-size: 1.25rem; font-weight: 600; }
 .proxy-console { position: relative; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); }
 .proxy-bar { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.proxy-bar-actions { display: flex; align-items: center; gap: 4px; margin-left: 8px; }
 .proxy-status { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 0.72rem; font-weight: 500; color: var(--text-muted); }
 .proxy-status .s-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
 .proxy-status.is-checking .s-dot { background: var(--warning); animation: pulse 1.6s infinite; }
@@ -240,6 +241,28 @@ body.player-active .topbar, body.player-active .hud-bl, body.player-active .hud-
 .proxy-state .state-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
 .proxy-examples { display: flex; gap: 8px; flex-wrap: wrap; }
 .scan-lines { position: absolute; inset: 0; opacity: 0.4; background: repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in srgb, var(--bg) 30%, transparent) 3px 4px); }
+.proxy-console:fullscreen {
+  display: flex; flex-direction: column; border-radius: 0; border: none;
+  width: 100vw; height: 100vh; background: var(--bg-elev);
+}
+.proxy-console:fullscreen .proxy-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.proxy-console:fullscreen .proxy-viewport { flex: 1; height: auto; margin-top: 0; border: none; border-radius: 0; }
+
+.modal-field { margin-bottom: 12px; }
+.modal-label { display: block; font-size: 0.76rem; font-weight: 500; color: var(--text-2); margin-bottom: 5px; }
+.modal-form .field-input { width: 100%; }
+
+.shortcut-custom { position: relative; }
+.shortcut-x {
+  position: absolute; top: 3px; right: 3px; width: 17px; height: 17px;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; line-height: 1; color: var(--text-muted);
+  background: var(--surface-2); border: 1px solid var(--border);
+  opacity: 0; transition: opacity var(--dur-fast), color var(--dur-fast);
+}
+.shortcut-custom:hover .shortcut-x { opacity: 1; }
+.shortcut-x:hover { color: var(--error); border-color: var(--error); }
+
 .proxy-trail { position: relative; width: 180px; height: 4px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-top: 10px; }
 .proxy-trail i { position: absolute; inset: 0; width: 40%; border-radius: 99px; background: var(--accent); animation: trail 1.2s var(--ease-out) infinite; }
 @keyframes trail { from { left: -40%; } to { left: 100%; } }

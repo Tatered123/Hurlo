@@ -31,8 +31,6 @@
   }
 
   function wispUrl() {
-    const fixed = H.util.storage.get('hurlo:wisp-exit:v1', '');
-    if (fixed) return fixed;
     const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
     return `${scheme}://${location.host}/wisp/`;
   }
@@ -217,7 +215,14 @@
 
   /* ---- page ---- */
 
-  let viewport, input, statusEl, launchBtn;
+  let viewport, input, statusEl, launchBtn, consoleEl;
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) { document.exitFullscreen().catch(function () {}); return; }
+    (consoleEl || viewport).requestFullscreen().catch(function () {
+      H.ui.toast({ type: 'warn', msg: 'Fullscreen was blocked by the browser' });
+    });
+  }
 
   function status(text, busy, error, ok) {
     statusEl.querySelector('.s-text').textContent = text;
@@ -258,6 +263,24 @@
     );
 
     viewport = el('div', { class: 'proxy-viewport', 'aria-live': 'polite' });
+    consoleEl = el('section', { class: 'proxy-console' },
+      el('div', { class: 'proxy-bar' },
+        el('span', { style: { fontSize: '0.8rem', fontWeight: 500 } }, 'Relay'),
+        el('span', { class: 'proxy-bar-actions' },
+          el('button', {
+            class: 'icon-btn', 'aria-label': 'Toggle fullscreen', title: 'Fullscreen',
+            onClick: toggleFullscreen
+          }, el('span', { html: H.ui.icon('expand'), 'aria-hidden': 'true' }))),
+        statusEl),
+      el('div', { class: 'proxy-body' },
+        form,
+        el('div', { class: 'chip-row', style: { marginTop: '12px' }, role: 'group', 'aria-label': 'Engine' },
+          engineChip('scramjet'), engineChip('ultraviolet'),
+          el('span', { class: 'fs-sep', 'aria-hidden': 'true' }, '/'),
+          transportChip('epoxy'), transportChip('libcurl')),
+        viewport
+      )
+    );
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -270,20 +293,7 @@
       el('header', { class: 'proxy-head' },
         el('h1', null, 'Proxy'),
         el('span', { class: 'section-sub' }, 'browse through Hurlo')),
-      el('section', { class: 'proxy-console' },
-        el('div', { class: 'proxy-bar' },
-          el('span', { style: { fontSize: '0.8rem', fontWeight: 500 } }, 'Relay'),
-          statusEl),
-        el('div', { class: 'proxy-body' },
-          form,
-          el('div', { class: 'chip-row', style: { marginTop: '12px' }, role: 'group', 'aria-label': 'Engine' },
-            engineChip('scramjet'), engineChip('ultraviolet'),
-            el('span', { class: 'fs-sep', 'aria-hidden': 'true' }, '/'),
-            transportChip('epoxy'), transportChip('libcurl')),
-          exitRow(),
-          viewport
-        )
-      )
+      consoleEl
     ));
 
     if (handed.trim()) {
@@ -308,6 +318,36 @@
     );
 
     return () => clearInterval(pollTimer);
+
+    function engineChip(id) {
+      return el('button', {
+        class: 'chip' + (engine === id ? ' is-active' : ''),
+        'aria-pressed': String(engine === id),
+        title: ENGINES[id].desc,
+        onClick: (e) => {
+          if (engine === id) return;
+          engine = id;
+          [...e.currentTarget.parentNode.querySelectorAll('.chip')].forEach((c) => c.classList.remove('is-active'));
+          e.currentTarget.classList.add('is-active');
+          H.ui.toast({ type: 'ok', msg: 'Engine: ' + ENGINES[id].label });
+          if (currentUrl && iframe) { ready = null; launch(currentUrl); }
+        }
+      }, ENGINES[id].label);
+    }
+
+    function transportChip(id) {
+      return el('button', {
+        class: 'chip' + (transport === id ? ' is-active' : ''),
+        'aria-pressed': String(transport === id),
+        title: TRANSPORTS[id].desc,
+        onClick: () => {
+          if (transport === id) return;
+          H.util.storage.set('hurlo:proxy-transport:v1', id);
+          // the running controller holds the old transport — reload for a clean switch
+          location.reload();
+        }
+      }, TRANSPORTS[id].label);
+    }
 
     function engineChip(id) {
       return el('button', {

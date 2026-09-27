@@ -21,6 +21,7 @@
   const SYSTEM_NAMES = { nes: 'NES', snes: 'SNES', n64: 'N64', gba: 'GBA', gbc: 'GBC', gb: 'Game Boy', ds: 'Nintendo DS', '3ds': 'Nintendo 3DS', psx: 'PlayStation', ps1: 'PS1', psp: 'PSP', sega: 'Sega', genesis: 'Genesis', md: 'Mega Drive', arcade: 'Arcade', atari: 'Atari', misc: 'Other' };
 
   let state = { q: '', sort: 'az', favs: false, shown: PAGE_SIZE };
+  let renderToken = 0;  // invalidates pending render timers on navigation
 
   function restore() {
     const saved = H.util.storage.get(STATE_KEY, null);
@@ -87,6 +88,7 @@
     if (!lib) return renderRoot(page);
     if (!lib.categories.length) return renderList(view, page, segs, { libId: lib.id });
     if (segs.length === 1) return renderCategories(page, lib);
+    if (segs[1] === 'all') return renderList(view, page, segs, { libId: lib.id });
     if (segs[1] === 'emulated') return renderEmulated(view, page, segs, lib);
     if (lib.categories.some((c) => c.id === segs[1])) return renderList(view, page, segs, { libId: lib.id, category: segs[1] });
     location.replace('#/games/' + lib.id);
@@ -136,6 +138,7 @@
 
   /* any flat game list */
   function renderList(view, page, segs, scope) {
+    const myToken = ++renderToken;  // stale timers bail (throttled panes reorder them)
     const listScope = { libId: scope.libId, category: scope.category || null, system: scope.system || null };
 
     page.append(breadcrumb(segs));
@@ -155,7 +158,7 @@
 
     const favChip = el('button', {
       class: 'chip', id: 'fav-filter', 'aria-pressed': String(state.favs),
-      onClick: () => { state.favs = !state.favs; favChip.setAttribute('aria-pressed', String(state.favs)); applyResults({ reset: true }); persist(); }
+      onClick: () => { state.favs = !state.favs; favChip.setAttribute('aria-pressed', String(state.favs)); applyResults(listScope, { reset: true }); persist(); }
     }, ic('heart'), 'Favorites');
 
     page.append(el('div', { class: 'games-toolbar' },
@@ -178,15 +181,17 @@
     results.append(...Array.from({ length: 8 }, () => H.ui.skeletonCard()));
 
     /* render shortly after paint; setTimeout (not rAF) so results appear
-       even when the browser suppresses frame production */
+       even when the browser suppresses frame production. The token bails
+       if another folder was opened before this timer ran — otherwise a
+       throttled timer could paint the previous folder's games here. */
     setTimeout(() => {
-      if (!document.getElementById('games-page')) return; // navigated away
-      applyResults({ reset: true });
+      if (myToken !== renderToken || !document.getElementById('games-page')) return;
+      applyResults(listScope, { reset: true });
       const y = H.util.storage.get('hurlo:games-scroll:v1', 0);
       if (y) window.scrollTo(0, y);
     }, 60);
 
-    return () => H.util.storage.set('hurlo:games-scroll:v1', window.scrollY);
+    return () => { renderToken++; H.util.storage.set('hurlo:games-scroll:v1', window.scrollY); };
 
     function onQuery(q) {
       state.q = q;

@@ -10,7 +10,7 @@
 (function (H) {
   'use strict';
 
-  let canvas, ctx, W = 0, H = 0, dpr = 1;
+  let canvas, ctx, vw = 0, vh = 0, dpr = 1;
   let particles = [];
   let stars = [];
   let raf = 0;
@@ -37,7 +37,7 @@
   }
 
   function build() {
-    const count = Math.min(320, Math.round((W * H) / 6800));
+    const count = Math.min(320, Math.round((vw * vh) / 6800));
     particles = [];
     for (let i = 0; i < count; i++) {
       particles.push({
@@ -59,30 +59,30 @@
   function resize() {
     if (!canvas) return;
     dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
+    vw = window.innerWidth;
+    vh = window.innerHeight;
+    canvas.width = Math.round(vw * dpr);
+    canvas.height = Math.round(vh * dpr);
+    canvas.style.width = vw + 'px';
+    canvas.style.height = vh + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     build();
     if (!running) draw(performance.now()); // static frame for reduced motion
   }
 
   function vortexCenter() {
-    return { cx: W * 0.5, cy: H * 0.44 };
+    return { cx: vw * 0.5, cy: vh * 0.44 };
   }
 
   function draw(t) {
     if (!ctx) return;
     const dt = Math.min(48, t - lastT) / 1000;
     lastT = t;
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, vw, vh);
 
     const { cx, cy } = vortexCenter();
-    const Rout = Math.hypot(W, H) * 0.62;
-    const R0 = Math.min(W, H) * 0.05;
+    const Rout = Math.hypot(vw, vh) * 0.62;
+    const R0 = Math.min(vw, vh) * 0.05;
     const motion = H.settings ? (H.settings.get('reducedMotion') ? 0 : H.settings.get('motionScale')) : 1;
     const time = t / 1000;
 
@@ -93,7 +93,7 @@
       ctx.globalAlpha = 0.35 * tw;
       ctx.fillStyle = colors.star;
       ctx.beginPath();
-      ctx.arc(s.x * W, s.y * H, s.s, 0, Math.PI * 2);
+      ctx.arc(s.x * vw, s.y * vh, s.s, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();

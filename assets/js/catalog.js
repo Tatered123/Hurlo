@@ -30,6 +30,7 @@
           entry: g.entry,
           cover: g.cover || '',
           source: g.source,
+          kind: g.kind || 'page',
           category: g.category || '',
           system: g.system || '',
           libraryId: lib.id,

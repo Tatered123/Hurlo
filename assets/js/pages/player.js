@@ -17,6 +17,10 @@
   const LOAD_TIMEOUT = 45000;
 
   function render(params, view) {
+    return renderGame(params, view);
+  }
+
+  function renderGame(params, view) {
     const game = H.catalog.get(params.uid);
 
     if (!game) {
@@ -33,6 +37,51 @@
 
     H.catalog.pushRecent(game.uid);
     document.body.classList.add('player-active');
+
+    /* bare .swf entry: play through Ruffle (the same CDN build the UGS flash
+       games use) — light, no emulator */
+    if (game.entry.toLowerCase().endsWith('.swf')) {
+      const swfUrl = new URL(game.entry, location.href).href;
+      const wrap = el('div', { class: 'player-root page' },
+        el('div', { class: 'player-veil', 'aria-hidden': 'true',
+          style: { background: 'radial-gradient(60% 55% at 50% 40%, rgba(140,130,225,0.3), transparent 70%), linear-gradient(155deg, #2b2f58, #10132b)' } }),
+        el('div', { class: 'swf-holder' },
+          el('div', { class: 'player-loading' }, el('div', { html: H.ui.spinner() }))));
+      const controls = el('div', { class: 'player-controls' },
+        el('button', { class: 'btn', onClick: function () { if (document.fullscreenElement) document.exitFullscreen().catch(function () {}); else wrap.querySelector('.swf-holder').requestFullscreen().catch(function () {}); } }, ic('expand'), 'Full screen'),
+        el('button', { class: 'btn', onClick: function () { H.router.go('#/games'); } }, ic('grid'), 'Back to games'));
+      wrap.append(controls);
+      view.append(wrap);
+      const holder = wrap.querySelector('.swf-holder');
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/@ruffle-rs/ruffle';
+      s.onload = function () {
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.RufflePlayer.config = { letterbox: 'on', scale: 'showAll', allowFullscreen: true, unmuteOverlay: 'hidden' };
+        const player = window.RufflePlayer.newest().createPlayer();
+        player.style.width = '100%';
+        player.style.height = '100%';
+        holder.append(player);
+        player.load({ url: swfUrl });
+        const l = holder.querySelector('.player-loading');
+        if (l) l.remove();
+      };
+      s.onerror = function () {
+        holder.innerHTML = '';
+        holder.append(el('div', { class: 'player-error' },
+          el('div', { class: 'empty' },
+            el('div', { class: 'empty-orb', html: H.ui.icon('cloud-off') }),
+            el('h3', null, 'Ruffle failed to load'),
+            el('p', null, 'The flash player runtime comes from unpkg.com and could not be reached.'))));
+      };
+      const onKey = function (e) { if (e.key === 'Escape' && !document.fullscreenElement) H.router.go('#/games'); };
+      document.addEventListener('keydown', onKey);
+      return function () {
+        document.removeEventListener('keydown', onKey);
+        document.body.classList.remove('player-active');
+        if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+      };
+    }
 
     /* --- frame --- */
     const frame = el('iframe', {
