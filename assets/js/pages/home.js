@@ -92,7 +92,7 @@
        Built-ins + whatever the visitor adds with the plus tile. */
     const KEY = 'hurlo:proxy-shortcuts:v1';
     const builtins = [
-      { icon: 'film', label: 'Movies', url: 'https://reelix.ac/' },
+      { icon: 'film', label: 'Movies', url: 'https://www.movy.sx/' },
       { icon: 'music', label: 'Music', url: 'https://monochrome.st/' }
     ];
     const customs = H.util.storage.get(KEY, []);
