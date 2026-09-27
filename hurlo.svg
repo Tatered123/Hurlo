@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="300">
+  <rect width="500" height="300" fill="black"></rect>
+  <text x="250" y="160" text-anchor="middle" fill="white" font-size="50">
+    HURLO
+  </text>
+</svg>
