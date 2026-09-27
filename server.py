@@ -397,7 +397,10 @@ BaseHTTPRequestHandler.parse_request = _patched_parse
 
 def main():
     socketserver.ThreadingMixIn.daemon_threads = True
-    srv = ThreadingHTTPServer(("0.0.0.0", PORT), HurloHandler)
+    # loopback only: put Caddy (or any TLS proxy) in front for public access —
+    # service workers require https, and the raw port shouldn't face the net
+    host = "127.0.0.1"
+    srv = ThreadingHTTPServer((host, PORT), HurloHandler)
     print(f"Hurlo serving {ROOT}", flush=True)
     print(f"  http://127.0.0.1:{PORT}  (static + cross-origin isolation)", flush=True)
     print(f"  ws://127.0.0.1:{PORT}/wisp/  (proxy relay)", flush=True)

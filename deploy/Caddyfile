@@ -1,0 +1,11 @@
+# Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# Replace yourdomain.com with the domain pointed at this VPS, then:
+#   sudo cp Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
+#
+# WebSocket upgrades (the wisp relay on /wisp/) are proxied automatically.
+
+yourdomain.com {
+	encode zstd gzip
+
+	reverse_proxy 127.0.0.1:8123
+}

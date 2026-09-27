@@ -1,0 +1,15 @@
+[Unit]
+Description=Hurlo (static site + wisp relay)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/hurlo
+ExecStart=/usr/bin/python3 -u server.py 8123
+Restart=always
+RestartSec=3
+# hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
