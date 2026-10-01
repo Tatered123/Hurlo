@@ -336,19 +336,63 @@ def numeric_key(stem: str) -> str:
     return m.group(1) if m else ""
 
 
-def cover_for(lib_id: str, game_id: str, numeric: str = "") -> str:
-    """Cover lookup: the user-supplied covers/ folder (keyed by numeric game
-    id) first, then assets/covers (keyed by game id)."""
-    for base in (ROOT / "covers" / lib_id, COVERS_DIR / lib_id):
-        if numeric:
-            for ext in (".png", ".jpg", ".jpeg", ".webp", ".gif"):
-                p = base / f"{numeric}{ext}"
-                if p.is_file():
-                    return p.relative_to(ROOT).as_posix()
-        for ext in (".png", ".jpg", ".jpeg", ".webp"):
-            p = base / f"{game_id}{ext}"
+def _covers_dir(lib_id: str) -> Path | None:
+    """covers/ folder for a library, case-insensitive on the dir name."""
+    base = ROOT / "covers"
+    if not base.is_dir():
+        return None
+    for d in base.iterdir():
+        if d.is_dir() and d.name.lower() == lib_id.lower():
+            return d
+    return None
+
+
+def _norm_name(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", s.lower())
+
+
+def _common_prefix_len(a: str, b: str) -> int:
+    n = 0
+    for x, y in zip(a, b):
+        if x != y:
+            break
+        n += 1
+    return n
+
+
+def cover_for(lib_id: str, game_id: str, numeric: str = "", title: str = "") -> str:
+    """Cover lookup:
+    1. covers/<lib>/<numeric>.<ext>   (id-keyed, e.g. gn-math's 104.png)
+    2. assets/covers/<lib>/<gid>.<ext (generated ones)
+    3. covers/<lib>/<normalized title>.<ext>  (name-keyed, fuzzy prefix match)
+    """
+    base = _covers_dir(lib_id)
+    if base is None:
+        return ""
+    exts = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+    if numeric:
+        for ext in exts:
+            p = base / f"{numeric}{ext}"
             if p.is_file():
                 return p.relative_to(ROOT).as_posix()
+    for ext in exts:
+        p = base / f"{game_id}{ext}"
+        if p.is_file():
+            return p.relative_to(ROOT).as_posix()
+    if title:
+        want = _norm_name(title)
+        best, best_len = "", 0
+        for f in base.iterdir():
+            if f.suffix.lower() not in exts:
+                continue
+            cand = _norm_name(f.stem)
+            if cand == want:
+                return f.relative_to(ROOT).as_posix()
+            n = _common_prefix_len(want, cand)
+            if n >= 4 and n > best_len:
+                best, best_len = f.relative_to(ROOT).as_posix(), n
+        if best:
+            return best
     return ""
 
 
@@ -446,9 +490,10 @@ def scan_flat(lib_dir: Path, lib_id: str) -> dict | None:
     games = []
     for gdir, entry in collect_games(lib_dir):
         gid = make_game_id(lib_id, "root/" + (gdir.name if gdir else entry.stem))
+        gtitle = title_for(entry, gdir, prettify_name((gdir or entry).stem))
         games.append({
-            "id": gid, "title": title_for(entry, gdir, prettify_name((gdir or entry).stem)),
-            "entry": rel(entry), "cover": cover_for(lib_id, gid), "source": "flat",
+            "id": gid, "title": gtitle,
+            "entry": rel(entry), "cover": cover_for(lib_id, gid, title=gtitle), "source": "flat",
         })
 
     # folders that hold only .swf files (flash games without an html wrapper)
@@ -464,9 +509,10 @@ def scan_flat(lib_dir: Path, lib_id: str) -> dict | None:
         entry_rel = rel(swf)
         if entry_rel in swf_entries:
             continue
+        gtitle = title_for(swf, None, prettify_name(d.name))
         games.append({
-            "id": gid, "title": title_for(swf, None, prettify_name(d.name)),
-            "entry": entry_rel, "cover": cover_for(lib_id, gid), "source": "flat", "kind": "swf",
+            "id": gid, "title": gtitle,
+            "entry": entry_rel, "cover": cover_for(lib_id, gid, title=gtitle), "source": "flat", "kind": "swf",
         })
 
     games.sort(key=lambda g: sort_key(g["title"]))

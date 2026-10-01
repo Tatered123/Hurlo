@@ -85,6 +85,7 @@
     const R0 = Math.min(vw, vh) * 0.05;
     const motion = H.settings ? (H.settings.get('reducedMotion') ? 0 : H.settings.get('motionScale')) : 1;
     const time = t / 1000;
+    const style = H.settings ? H.settings.get('bgStyle') : 'storm';
 
     /* stars */
     ctx.save();
@@ -98,6 +99,8 @@
     }
     ctx.restore();
 
+    if (style === 'stars') { ctx.globalAlpha = 1; return; }  // stars-only mode
+
     /* eye glow */
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R0 * 4.2);
     g.addColorStop(0, colors.eye);
@@ -108,6 +111,8 @@
     ctx.beginPath();
     ctx.arc(cx, cy, R0 * 4.2, 0, Math.PI * 2);
     ctx.fill();
+
+    if (style === 'stars') { ctx.globalAlpha = 1; return; }
 
     /* vortex particles */
     for (const p of particles) {
@@ -150,6 +155,10 @@
     cancelAnimationFrame(raf);
   }
 
+  function bgHidden() {
+    return H.settings && H.settings.get('bgStyle') === 'off';
+  }
+
   function init() {
     canvas = document.getElementById('bg-vortex');
     if (!canvas) return;
@@ -158,7 +167,8 @@
     resize();
     window.addEventListener('resize', resize);
 
-    if (reduceMQ.matches || (H.settings && H.settings.get('reducedMotion'))) {
+    if (bgHidden()) { canvas.style.display = 'none'; }
+    else if (reduceMQ.matches || (H.settings && H.settings.get('reducedMotion'))) {
       draw(performance.now()); // single static frame
     } else {
       start();
@@ -168,6 +178,12 @@
     });
     if (H.settings) {
       H.settings.onChange((changed) => {
+        if (changed.bgStyle !== undefined) {
+          const hidden = H.settings.get('bgStyle') === 'off';
+          canvas.style.display = hidden ? 'none' : '';
+          if (hidden) { stop(); } else if (!running && !reduceMQ.matches && !H.settings.get('reducedMotion')) { start(); }
+          else if (!running) draw(performance.now());
+        }
         if (changed.theme) { readColors(); if (!running) draw(performance.now()); }
         if (changed.reducedMotion !== undefined) {
           if (changed.reducedMotion) { stop(); draw(performance.now()); }

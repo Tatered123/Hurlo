@@ -3,9 +3,9 @@ self.__uv$config = {
   prefix: "/service/uv/",
   encodeUrl: Ultraviolet.codec.xor.encode,
   decodeUrl: Ultraviolet.codec.xor.decode,
-  handler: "/uv/uv.handler.js",
-  client: "/uv/uv.client.js",
-  bundle: "/uv/uv.bundle.js",
+  handler: "/vendor/uv/uv.handler.js",
+  client: "/vendor/uv/uv.client.js",
+  bundle: "/vendor/uv/uv.bundle.js",
   config: "/uv.config.js",
-  sw: "/uv/uv.sw.js",
+  sw: "/vendor/uv/uv.sw.js",
 };

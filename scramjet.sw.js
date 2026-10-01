@@ -11,7 +11,7 @@
 // nested under an arbitrary path (see tools/build-static.mjs) rather than
 // served from the origin root the way the normal app always is — this form
 // resolves the same for both.
-importScripts("./controller/controller.sw.js");
+importScripts("./vendor/controller/controller.sw.js");
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));

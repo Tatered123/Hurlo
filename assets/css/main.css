@@ -345,6 +345,19 @@ input, select { font: inherit; color: inherit; }
 
 #bg-vortex { position: absolute; inset: 0; display: block; }
 
+.bg-gradient {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(90% 70% at 18% 8%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%),
+    radial-gradient(70% 60% at 88% 82%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 65%),
+    linear-gradient(158deg, color-mix(in srgb, var(--accent) 7%, var(--bg)) 0%, var(--bg) 55%);
+}
+html:not([data-bg="gradient"]) .bg-gradient { display: none; }
+html[data-bg="gradient"] .bg-arm, html[data-bg="gradient"] #bg-vortex { display: none; }
+html[data-bg="stars"] .bg-arm { display: none; }
+html[data-bg="solid"] .bg-arm, html[data-bg="solid"] #bg-vortex,
+html[data-bg="solid"] .bg-gradient, html[data-bg="solid"] .bg-vignette { display: none; }
+
 .bg-vignette {
   position: absolute; inset: 0;
   background:
@@ -658,7 +671,8 @@ input, select { font: inherit; color: inherit; }
 .hud-br { position: fixed; right: 18px; bottom: 16px; z-index: 60; }
 .hud-pill {
   display: inline-flex; align-items: center; gap: 7px;
-  padding: 7px 13px; border-radius: 999px; font-size: 0.74rem; font-weight: 600;
+  padding: 7px 13px; border-radius: 999px; font-family: var(--font-pixel);
+  font-size: 0.66rem; font-weight: 400; letter-spacing: 0.04em;
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   border: 1px solid var(--border-strong); color: var(--text-2);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);

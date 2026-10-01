@@ -21,6 +21,8 @@
         var t = document.documentElement;
         if (s.theme) t.setAttribute('data-theme', s.theme);
         if (s.density) t.setAttribute('data-density', s.density);
+        var bgMap = { ambient: 'gradient', off: 'solid' };
+        t.setAttribute('data-bg', bgMap[s.bgStyle] || s.bgStyle || 'storm');
         var reduced = s.reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var motion = s.motionScale;
         if (motion === undefined) motion = reduced ? 0 : 1;
@@ -58,6 +60,7 @@
   <div class="bg-atmosphere" aria-hidden="true">
     <div class="bg-arm bg-arm--1"></div>
     <div class="bg-arm bg-arm--2"></div>
+    <div class="bg-gradient"></div>
     <canvas id="bg-vortex"></canvas>
     <div class="bg-vignette"></div>
   </div>

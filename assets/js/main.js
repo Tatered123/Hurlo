@@ -23,11 +23,7 @@
       el('button', {
         class: 'hud-pill', 'aria-label': 'Open Hurlo in an about:blank window',
         onClick: openAboutBlankCloak
-      }, el('span', { html: H.ui.icon('shield-check'), 'aria-hidden': 'true' }), 'about:blank'),
-      el('button', {
-        class: 'hud-pill', 'aria-label': 'Open Hurlo under a blob: URL',
-        onClick: openBlobCloak
-      }, el('span', { html: H.ui.icon('zap'), 'aria-hidden': 'true' }), 'blob:')
+      }, el('span', { html: H.ui.icon('shield-check'), 'aria-hidden': 'true' }), 'about:blank')
     );
 
     /* bottom-center: primary destinations */
@@ -40,7 +36,11 @@
     /* bottom-right: live clock */
     const clock = el('span', { class: 'hud-clock', id: 'hud-clock', role: 'timer', 'aria-label': 'Current time' }, '—');
     document.getElementById('hud-br').append(clock);
-    const tick = () => { clock.textContent = new Date().toLocaleTimeString(); };
+    const tick = () => {
+      clock.textContent = H.settings.get('clock24')
+        ? new Date().toLocaleTimeString(undefined, { hour12: false })
+        : new Date().toLocaleTimeString();
+    };
     tick();
     setInterval(tick, 1000);
   }
@@ -70,35 +70,6 @@
     win.document.open();
     win.document.write(doc);
     win.document.close();
-  }
-
-  async function openBlobCloak() {
-    try {
-      const res = await fetch(siteUrl(), { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      let html = await res.text();
-      const base = location.origin === 'null' ? '' : location.origin + '/';
-      if (base && !/<base\s/i.test(html)) {
-        html = html.replace(/<head([^>]*)>/i, '<head$1><base href="' + base + '">');
-      }
-      const c = H.cloak.resolved();
-      html = html.replace(/<title>[\s\S]*?<\/title>/i, '<title>' + c.windowTitle + '</title>');
-      if (/<link[^>]+rel=["']icon["'][^>]*>/i.test(html)) {
-        html = html.replace(/<link[^>]+rel=["']icon["'][^>]*>/i, '<link rel="icon" href="' + c.windowIcon + '">');
-      } else {
-        html = html.replace(/<\/head>/i, '<link rel="icon" href="' + c.windowIcon + '"></head>');
-      }
-      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-      const win = window.open(url, '_blank');
-      if (!win) {
-        H.ui.toast({ type: 'warn', msg: 'Popup blocked — allow popups to use blob:' });
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        return;
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 300000);
-    } catch {
-      H.ui.toast({ type: 'warn', msg: 'blob: cloak needs the site served over http(s)' });
-    }
   }
 
   /* ---- about / disclaimer modal ---- */

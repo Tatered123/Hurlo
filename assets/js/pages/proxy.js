@@ -17,8 +17,8 @@
   const ic = (n) => H.ui.iconEl(n);
 
   const TRANSPORTS = {
-    epoxy: { label: 'Epoxy', path: '/epoxy/index.mjs', path3: '/epoxy3/index.mjs', desc: 'Fine for pages, slow on large downloads.' },
-    libcurl: { label: 'libcurl', path: '/libcurl/index.mjs', path3: '/libcurl2/index.mjs', desc: 'Fine for pages, faster on large downloads.' }
+    epoxy: { label: 'Epoxy', path: '/vendor/epoxy/index.mjs', path3: '/vendor/epoxy3/index.mjs', desc: 'Fine for pages, slow on large downloads.' },
+    libcurl: { label: 'libcurl', path: '/vendor/libcurl/index.mjs', path3: '/vendor/libcurl2/index.mjs', desc: 'Fine for pages, faster on large downloads.' }
   };
 
   /* address-bar input -> URL, falling back to a search engine */
@@ -86,8 +86,8 @@
       label: 'Scramjet v2',
       desc: 'Quick on simple pages, can be slow on heavy ones.',
       ready: once(async () => {
-        await script('/scram/scramjet.js');
-        await script('/controller/controller.api.js');
+        await script('/vendor/scram/scramjet.js');
+        await script('/vendor/controller/controller.api.js');
         const { Controller } = globalThis.$scramjetController;
         const sw = await registerSW('/scramjet.sw.js', '/service/scramjet/');
         const transportMod = await import(TRANSPORTS[transport].path3);
@@ -97,9 +97,9 @@
           transport: transportClient,
           config: {
             prefix: '/service/scramjet/',
-            scramjetPath: '/scram/scramjet.js',
-            injectPath: '/controller/controller.inject.js',
-            wasmPath: '/scram/scramjet.wasm'
+            scramjetPath: '/vendor/scram/scramjet.js',
+            injectPath: '/vendor/controller/controller.inject.js',
+            wasmPath: '/vendor/scram/scramjet.wasm'
           },
           scramjetConfig: { flags: { captureErrors: false } }
         });
@@ -119,12 +119,12 @@
       label: 'Ultraviolet',
       desc: 'Slower to start, better on heavy pages.',
       ready: once(async () => {
-        await script('/uv/uv.bundle.js');
+        await script('/vendor/uv/uv.bundle.js');
         await script('/uv.config.js');
         await registerSW('/uv.sw.js', '/service/uv/');
-        const { BareMuxConnection } = await import('/baremux/index.mjs');
+        const { BareMuxConnection } = await import('/vendor/baremux/index.mjs');
         if (!window.bareMuxConnection) {
-          window.bareMuxConnection = new BareMuxConnection('/baremux/worker.js');
+          window.bareMuxConnection = new BareMuxConnection('/vendor/baremux/worker.js');
         }
         await window.bareMuxConnection.setTransport(TRANSPORTS[transport].path, [{ wisp: wispUrl() }]);
         return {};
@@ -140,7 +140,7 @@
   }
 
   let transport = H.util.storage.get('hurlo:proxy-transport:v1', 'epoxy') in TRANSPORTS ? H.util.storage.get('hurlo:proxy-transport:v1', 'epoxy') : 'epoxy';
-  let engine = 'scramjet';
+  let engine = (H.settings.get('defaultEngine') in ENGINES) ? H.settings.get('defaultEngine') : 'scramjet';
   let ready = null;   // { controller } for scramjet, {} for uv
   let frame = null;   // scramjet frame handle (or the uv iframe itself)
   let iframe = null;

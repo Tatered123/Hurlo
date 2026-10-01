@@ -28,13 +28,56 @@
           H.ui.toast({ type: 'ok', msg: on ? 'Reduced motion on' : 'Reduced motion off' });
         }))
       ),
+      colorsCard(),
+      backgroundCard(),
       el('section', { class: 'settings-card' },
-        el('h3', null, 'Games'),
-        row('Auto fullscreen', switchEl(S().autoFullscreen, 'Auto fullscreen', (on) => H.settings.set({ autoFullscreen: on })))
+        el('h3', null, 'Proxy'),
+        row('Default engine', segmented(['scramjet', 'ultraviolet'], ['Scramjet v2', 'Ultraviolet'], S().defaultEngine, function (v) {
+          H.settings.set({ defaultEngine: v });
+          H.ui.toast({ type: 'ok', msg: 'Engine: ' + (v === 'scramjet' ? 'Scramjet v2' : 'Ultraviolet') });
+        }))
       ),
       cloakCard(),
       el('section', { class: 'settings-card' }, advancedCard())
     ));
+  }
+
+  function colorsCard() {
+    const c = S();
+    const accent = el('input', { type: 'color', class: 'color-input', value: c.accentColor || '#b7a6ff', 'aria-label': 'Accent color' });
+    const bg = el('input', { type: 'color', class: 'color-input', value: c.bgColor || '#08080c', 'aria-label': 'Background color' });
+    accent.addEventListener('input', function () { H.settings.set({ accentColor: accent.value }); });
+    bg.addEventListener('input', function () { H.settings.set({ bgColor: bg.value }); });
+    return el('section', { class: 'settings-card' },
+      el('h3', null, 'Colors'),
+      row('Accent', colorWrap(accent, c.accentColor, 'var(--accent)')),
+      row('Background', colorWrap(bg, c.bgColor, 'var(--bg)')),
+      row('Reset colors',
+        el('button', {
+          class: 'btn btn--sm',
+          onClick: function () {
+            H.settings.set({ accentColor: '', bgColor: '' });
+            accent.value = '#b7a6ff';
+            bg.value = '#08080c';
+            H.ui.toast({ type: 'ok', msg: 'Colors reset' });
+          }
+        }, 'Reset'))
+    );
+  }
+
+  function colorWrap(input, current, fallback) {
+    input.style.background = current || fallback;
+    input.addEventListener('input', function () { input.style.background = input.value; });
+    return input;
+  }
+
+  function backgroundCard() {
+    return el('section', { class: 'settings-card' },
+      el('h3', null, 'Background'),
+      row('Style', segmented(['storm', 'gradient', 'stars', 'solid'], ['Storm', 'Gradient', 'Stars', 'Solid'], S().bgStyle, function (v) {
+        H.settings.set({ bgStyle: v });
+      }))
+    );
   }
 
   function cloakCard() {

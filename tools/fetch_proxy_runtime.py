@@ -84,14 +84,14 @@ def main():
         src = pkg_dir / "package"
         # map package -> destination folder in the web root
         dest_map = {
-            "@titaniumnetwork-dev/ultraviolet": "uv",
-            "@mercuryworkshop/scramjet": "scram",
-            "@mercuryworkshop/scramjet-controller": "controller",
-            "@mercuryworkshop/bare-mux": "baremux",
-            "@mercuryworkshop/epoxy-transport": "epoxy",
-            "@mercuryworkshop/libcurl-transport": "libcurl",
-            "@mercuryworkshop/epoxy-transport-3": "epoxy3",
-            "@mercuryworkshop/libcurl-transport-2": "libcurl2",
+            "@titaniumnetwork-dev/ultraviolet": "vendor/uv",
+            "@mercuryworkshop/scramjet": "vendor/scram",
+            "@mercuryworkshop/scramjet-controller": "vendor/controller",
+            "@mercuryworkshop/bare-mux": "vendor/baremux",
+            "@mercuryworkshop/epoxy-transport": "vendor/epoxy",
+            "@mercuryworkshop/libcurl-transport": "vendor/libcurl",
+            "@mercuryworkshop/epoxy-transport-3": "vendor/epoxy3",
+            "@mercuryworkshop/libcurl-transport-2": "vendor/libcurl2",
         }
         if name == "@mercuryworkshop/wisp-js":
             continue  # protocol reference only, handled separately
